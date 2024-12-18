@@ -1,5 +1,8 @@
 import { fakerES_MX as faker } from "@faker-js/faker";
+import bcrypt from "bcrypt";
 import PetDTO from "../dto/Pet.dto.js";
+import UserDTO from "../dto/User.dto.js";
+import Users from "../dao/Users.dao.js";
 
 const speciesAndBreeds = {
     Dog: ['Labrador', 'Bulldog', 'Beagle', 'Poodle', 'German Shepherd'],
@@ -36,4 +39,29 @@ export const generatePets = (num = 100) => {
         pets.push(generatePet());
     }
     return pets;
+};
+
+export const generateUsers = (num = 50) => {
+    const users = [];
+    const hashedPassword = bcrypt.hashSync("coder123", 10);
+
+    for (let i = 0; i < num; i++) {
+        users.push({
+            first_name: faker.person.firstName(),
+            last_name: faker.person.lastName(),
+            email: faker.internet.email(),
+            password: hashedPassword,
+            role: faker.helpers.arrayElement(["user", "admin"]),
+            pets: [],
+        });
+    }
+
+    return users;
+};
+
+export const insertGeneratedUsers = async (num = 50) => {
+    const usersDao = new Users();
+    const users = generateUsers(num);
+    await usersDao.save(users);
+    return users;
 };

@@ -1,11 +1,58 @@
 import express from 'express';
-import { generatePets } from '../utils/mocking.js';
+import { generatePets, generateUsers } from '../utils/mocking.js';
+import Users from '../dao/Users.dao.js';
+import petModel from '../dao/models/pet.js';
 
 const router = express.Router();
+const usersDao = new Users();
 
+// Endpoint to generate mocking pets
 router.get('/mockingpets', (req, res) => {
-    const pets = generatePets(100); 
+    const pets = generatePets(100);
     res.status(200).json({ pets });
+});
+
+// Endpoint to generate mocking users
+router.get('/mockingusers', async (req, res) => {
+    try {
+        const users = generateUsers(50);
+        res.status(200).json({ users });
+    } catch (error) {
+        res.status(500).json({ message: 'Error generating users', error });
+    }
+});
+
+// Endpoint to generate and insert data
+router.post('/generateData', async (req, res) => {
+    const { users = 0, pets = 0 } = req.body;
+
+    // Validate that users and pets are integers
+    if (!Number.isInteger(users) || !Number.isInteger(pets) || users <= 0 || pets <= 0) {
+        return res.status(400).json({
+            message: 'Invalid parameters. "users" and "pets" must be positive integers.',
+        });
+    }
+
+    try {
+        // Generate users and pets
+        const generatedUsers = generateUsers(users);
+        const generatedPets = generatePets(pets);
+
+        // Insert users and pets into the database
+        const userInsertResult = await usersDao.save(generatedUsers);
+        const petInsertResult = await petModel.insertMany(generatedPets);
+
+        res.status(201).json({
+            message: 'Data generated and inserted successfully',
+            usersInserted: userInsertResult.length || 0,
+            petsInserted: petInsertResult.length || 0,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error generating and inserting data',
+            error: error.message,
+        });
+    }
 });
 
 export default router;
