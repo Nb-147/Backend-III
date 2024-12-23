@@ -28,6 +28,7 @@ export const generatePet = () => {
     return PetDTO.getPetInputFrom({
         name,
         specie: species,
+        breed,
         image,
         birthDate: birthDate.toISOString().split('T')[0],
     });

@@ -1,4 +1,4 @@
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format, transports, addColors } from 'winston';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,6 +23,8 @@ const logLevels = {
         debug: 'white',
     },
 };
+
+addColors(logLevels.colors);
 
 const devLogger = createLogger({
     levels: logLevels.levels,
@@ -49,7 +51,7 @@ const prodLogger = createLogger({
             level: 'info',
         }),
         new transports.File({
-            filename: path.join(__dirname, '../../logs/errors.log'),
+            filename: path.resolve(__dirname, '../../logs/errors.log'), 
             level: 'error',
         }),
     ],
