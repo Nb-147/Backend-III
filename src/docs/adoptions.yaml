@@ -1,0 +1,114 @@
+openapi: 3.0.0
+info:
+  title: Adoptions API
+  version: 1.0.0
+  description: API for managing pet adoptions
+paths:
+  /api/adoptions:
+    get:
+      summary: Get all adoptions
+      responses:
+        '200':
+          description: A list of all adoptions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Adoption'
+  /api/adoptions/{uid}/{pid}:
+    post:
+      summary: Create a new adoption for a pet by a user
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet adopted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: User or pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+        '400':
+          description: Pet is already adopted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+  /api/adoptions/{aid}:
+    get:
+      summary: Get adoption by ID
+      parameters:
+        - name: aid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Adoption details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  payload:
+                    $ref: '#/components/schemas/Adoption'
+        '404':
+          description: Adoption not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+components:
+  schemas:
+    Adoption:
+      type: object
+      properties:
+        _id:
+          type: string
+        owner:
+          type: string
+        pet:
+          type: string

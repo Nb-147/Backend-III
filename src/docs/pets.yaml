@@ -1,0 +1,473 @@
+openapi: 3.0.0
+info:
+  title: Pets API
+  version: 1.0.0
+  description: >
+    API for managing pets.
+    This module provides endpoints for CRUD operations on pet records.
+    **Security:** All endpoints (except image upload if se configura de otra forma) require a valid JWT Bearer token.
+servers:
+  - url: http://localhost:8080
+    description: Local development server.
+paths:
+  /api/pets:
+    get:
+      summary: Get all pets
+      description: |
+        **Endpoint Analysis:**
+        - Retrieves a list of all pet records stored in the system.
+        - **Security:** Requires a valid JWT token.
+        - **Response Details:**
+          - **200:** Returns a JSON object with a "status" field and a "payload" array containing pet objects.
+          - **401:** Unauthorized – if the token is missing or invalid.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of all pets retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: The status of the response.
+                  payload:
+                    type: array
+                    description: Array of pet objects.
+                    items:
+                      $ref: '#/components/schemas/Pet'
+              examples:
+                successExample:
+                  summary: Successful retrieval
+                  value:
+                    status: success
+                    payload:
+                      - _id: "64a1234c5678abcd12345678"
+                        name: "Buddy"
+                        specie: "Dog"
+                        birthDate: "2020-01-01"
+                        adopted: false
+                        owner: ""
+                        image: "https://example.com/images/buddy.jpg"
+        '401':
+          description: Unauthorized – JWT token missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                unauthorized:
+                  value:
+                    status: error
+                    error: Unauthorized
+    post:
+      summary: Create a new pet
+      description: |
+        **Endpoint Analysis:**
+        - Creates a new pet record in the system.
+        - **Request Requirements:** The request body must include the pet's **name**, **specie**, and **birthDate**.
+        - **Security:** Requires a valid JWT token.
+        - **Response Details:**
+          - **201:** Returns the newly created pet object.
+          - **400:** Bad Request – if required fields are missing.
+          - **401:** Unauthorized – if the JWT token is missing or invalid.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: The pet data needed to create a new record.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetInput'
+            examples:
+              petCreation:
+                summary: Valid pet creation payload
+                value:
+                  name: "Buddy"
+                  specie: "Dog"
+                  birthDate: "2020-01-01"
+      responses:
+        '201':
+          description: Pet created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+              examples:
+                created:
+                  summary: Successful pet creation
+                  value:
+                    status: success
+                    payload:
+                      _id: "64a1234c5678abcd12345678"
+                      name: "Buddy"
+                      specie: "Dog"
+                      birthDate: "2020-01-01"
+                      adopted: false
+                      owner: ""
+                      image: "https://example.com/images/buddy.jpg"
+        '400':
+          description: Bad Request – Incomplete values provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                missingData:
+                  value:
+                    status: error
+                    error: Incomplete values provided.
+        '401':
+          description: Unauthorized – JWT token missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                unauthorized:
+                  value:
+                    status: error
+                    error: Unauthorized
+  /api/pets/{pid}:
+    get:
+      summary: Get pet by ID
+      description: |
+        **Endpoint Analysis:**
+        - Retrieves details of a pet identified by its unique ID.
+        - The pet ID must be provided as a path parameter.
+        - **Response Details:**
+          - **200:** Returns a JSON object with the pet details.
+          - **404:** Pet not found.
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the pet.
+      responses:
+        '200':
+          description: Pet details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+              examples:
+                found:
+                  value:
+                    status: success
+                    payload:
+                      _id: "64a1234c5678abcd12345678"
+                      name: "Buddy"
+                      specie: "Dog"
+                      birthDate: "2020-01-01"
+                      adopted: false
+                      owner: ""
+                      image: "https://example.com/images/buddy.jpg"
+        '404':
+          description: Pet not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                notFound:
+                  value:
+                    status: error
+                    error: Pet not found
+    put:
+      summary: Update pet details
+      description: |
+        **Endpoint Analysis:**
+        - Updates the details of an existing pet record.
+        - Requires the pet ID as a path parameter and updated data in the request body.
+        - **Response Details:**
+          - **200:** Returns the updated pet object along with a confirmation message.
+          - **404:** Pet not found.
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the pet.
+      requestBody:
+        description: The updated pet data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetUpdate'
+      responses:
+        '200':
+          description: Pet updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+              examples:
+                updated:
+                  value:
+                    status: success
+                    message: Pet updated successfully
+                    payload:
+                      _id: "64a1234c5678abcd12345678"
+                      name: "Buddy Updated"
+                      specie: "Dog"
+                      birthDate: "2020-01-01"
+                      adopted: false
+                      owner: ""
+                      image: "https://example.com/images/buddy.jpg"
+        '404':
+          description: Pet not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                notFound:
+                  value:
+                    status: error
+                    error: Pet not found
+    delete:
+      summary: Delete a pet
+      description: |
+        **Endpoint Analysis:**
+        - Deletes a pet record from the system.
+        - The pet ID must be provided as a path parameter.
+        - **Response Details:**
+          - **200:** Confirmation that the pet has been deleted.
+          - **404:** Pet not found.
+      parameters:
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the pet.
+      responses:
+        '200':
+          description: Pet deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                deleted:
+                  value:
+                    status: success
+                    message: Pet deleted successfully
+        '404':
+          description: Pet not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                notFound:
+                  value:
+                    status: error
+                    error: Pet not found
+  /api/pets/withimage:
+    post:
+      summary: Create a new pet with image
+      description: |
+        **Endpoint Analysis:**
+        - Creates a new pet record along with an image.
+        - Accepts multipart/form-data.
+        - **Request Requirements:** Must include the pet's name, specie, birthDate, and an image file.
+        - **Response Details:**
+          - **201:** Returns the created pet object.
+          - **400:** Incomplete values or missing image file.
+      requestBody:
+        description: Pet data including an image file.
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the pet.
+                specie:
+                  type: string
+                  description: The species of the pet.
+                birthDate:
+                  type: string
+                  description: The pet's birth date in ISO format.
+                image:
+                  type: string
+                  format: binary
+                  description: The image file of the pet.
+      responses:
+        '201':
+          description: Pet created successfully with image.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+              examples:
+                createdWithImage:
+                  value:
+                    status: success
+                    payload:
+                      _id: "64a1234c5678abcd12345678"
+                      name: "Buddy"
+                      specie: "Dog"
+                      birthDate: "2020-01-01"
+                      adopted: false
+                      owner: ""
+                      image: "https://example.com/images/buddy.jpg"
+        '400':
+          description: Incomplete values or image file is required.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+              examples:
+                badRequest:
+                  value:
+                    status: error
+                    error: Incomplete values or image file is required.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Pet:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier of the pet.
+          example: "64a1234c5678abcd12345678"
+        name:
+          type: string
+          description: The pet's name.
+          example: "Buddy"
+        specie:
+          type: string
+          description: The species of the pet.
+          example: "Dog"
+        birthDate:
+          type: string
+          description: The pet's birth date in ISO format.
+          example: "2020-01-01"
+        adopted:
+          type: boolean
+          description: Indicates if the pet has been adopted.
+          example: false
+        owner:
+          type: string
+          description: The ID of the pet's owner (if adopted).
+          example: ""
+        image:
+          type: string
+          description: URL of the pet's image.
+          example: "https://example.com/images/buddy.jpg"
+    PetInput:
+      type: object
+      required:
+        - name
+        - specie
+        - birthDate
+      properties:
+        name:
+          type: string
+          description: The pet's name.
+          example: "Buddy"
+        specie:
+          type: string
+          description: The species of the pet.
+          example: "Dog"
+        birthDate:
+          type: string
+          description: The pet's birth date in ISO format.
+          example: "2020-01-01"
+    PetUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The pet's updated name.
+          example: "Buddy Updated"
+        specie:
+          type: string
+          description: The pet's updated species.
+          example: "Dog"
+        birthDate:
+          type: string
+          description: The pet's updated birth date in ISO format.
+          example: "2020-01-01"
+        adopted:
+          type: boolean
+          description: Indicates if the pet has been adopted.
+          example: false
